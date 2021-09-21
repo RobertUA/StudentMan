@@ -46,15 +46,15 @@ class Enemy(pygame.sprite.Sprite):
 
             if self.rect.center[0] % 25 != 0 or self.rect.center[1] % 25 != 0:
                 print(self.rect.center)
-            rnd = random.randint(0, 35)
-            if rnd == 0:
-                self.direction = [1, 0]
-            elif rnd == 1:
-                self.direction = [-1, 0]
-            elif rnd == 2:
-                self.direction = [0, 1]
-            elif rnd == 3:
-                self.direction = [0, -1]
+            # rnd = random.randint(0, 35)
+            # if rnd == 0:
+            #     self.direction = [1, 0]
+            # elif rnd == 1:
+            #     self.direction = [-1, 0]
+            # elif rnd == 2:
+            #     self.direction = [0, 1]
+            # elif rnd == 3:
+            #     self.direction = [0, -1]
             # print(self.rect.center)
             self.steps = 25
             # collision
@@ -82,8 +82,13 @@ class Enemy(pygame.sprite.Sprite):
                 route = bfs(Level, player_dot, self.dot)
             elif alg == 3:
                 route = ucs(Level, player_dot, self.dot)
+            elif alg == 4:
+                route = astar(Level, player_dot, self.dot)
             self.timer = str(end_timer())
 
+            temp_dir = [route[0][-2][0]-self.dot[0], route[0][-2][1]-self.dot[1]]
+            if -1 <= temp_dir[0] <= 1 and -1 <= temp_dir[1] <= 1:
+                self.direction = temp_dir
             if route is not None:
                 if way == 1:
                     self.route = route[0]
@@ -92,9 +97,10 @@ class Enemy(pygame.sprite.Sprite):
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, sprites):
+    def __init__(self, sprites, dot_img):
         pygame.sprite.Sprite.__init__(self)
-        self.dot = []
+        self.dot = [0, 0]
+        self.dot_img = dot_img
         self.points_count = 0
         self.image = sprites[0]
         self.iter = 0
@@ -105,6 +111,7 @@ class Player(pygame.sprite.Sprite):
         self.direction = [1, 0]
         self.oldDirection = [1, 0]
         self.steps = 0
+        self.route = []
 
     def update(self):
         # death
@@ -114,6 +121,7 @@ class Player(pygame.sprite.Sprite):
         # points
         points_hit = pygame.sprite.spritecollide(self, PointsSprs, True)
         if points_hit:
+            Level[self.dot[0] + self.direction[0]][self.dot[1] + self.direction[1]] = 0
             for el in points_hit:
                 self.points_count += el.value
             # print(self.points_count)
@@ -129,11 +137,20 @@ class Player(pygame.sprite.Sprite):
         else:
             temp_dot = [self.rect.center[0] / 25, self.rect.center[1] / 25]
             if 0 <= temp_dot[0] <= 20 and 0 <= temp_dot[1] <= 20:
-                self.dot = temp_dot
+                self.dot = [int(temp_dot[0]), int(temp_dot[1])]
             # print(self.rect.center)
             self.steps = 25
             # collision
+            coin = bfs_find_closest_point(Level, self.dot)
+            target = astar(Level, coin, self.dot)
+            self.route = target[0]
+            if self.dot != target[0][0]:
+                temp_dir = target[0][-2][0] - self.dot[0], target[0][-2][1] - self.dot[1]
+                # print(temp_dir)
+                if -1 <= temp_dir[0] <= 1 and -1 <= temp_dir[1] <= 1:
+                    self.direction = temp_dir
             self.oldDirection = self.direction
+            # print(self.direction)
             nextdot = [int(self.dot[0] + self.oldDirection[0]), int(self.dot[1] + self.oldDirection[1])]
             if 0 <= nextdot[0] <= 20 and 0 <= nextdot[1] <= 20:
                 if Level[nextdot[0]][nextdot[1]] == 1:

@@ -29,15 +29,16 @@ win = pygame.image.load(os.path.join(data_folder, 'win.png')).convert()
 icon = pygame.image.load(os.path.join(data_folder, 'icon.png')).convert()
 
 dot = [pygame.image.load(os.path.join(data_folder, 'dot1.png')).convert(),
-       pygame.image.load(os.path.join(data_folder, 'dot2.png')).convert()]
-dot[0].set_colorkey(BLACK)
-dot[1].set_colorkey(BLACK)
+       pygame.image.load(os.path.join(data_folder, 'dot2.png')).convert(),
+       pygame.image.load(os.path.join(data_folder, 'dot3.png')).convert()]
+for d in dot:
+    d.set_colorkey(BLACK)
 
 pygame.display.set_icon(icon)
 font = pygame.font.SysFont('Comic Sans MS', 30)
 font2 = pygame.font.SysFont('Comic Sans MS', 16)
 
-player = Player((player_img, run1img, run2img))
+player = Player((player_img, run1img, run2img), dot[2])
 PlayerSprs.add(player)
 #
 walls = []
@@ -55,7 +56,7 @@ def load():
     EnemySprs.empty()
     PointsSprs.empty()
 
-    player.__init__((player_img, run1img, run2img))
+    player.__init__((player_img, run1img, run2img), dot[2])
     # points
     rndm = []
     for r in range(0, len(Level)):
@@ -64,9 +65,9 @@ def load():
                 rndm.append([r, c])
 
     random.shuffle(rndm)
+    rndm = rndm[:15]
     for ri in rndm:
         Level[ri[0]][ri[1]] = 2
-
     for pi in range(0, 15):
         points.append(Point(point))
         # points[len(points) - 1].rect.center = [random.randint(2, 18) * 25, random.randint(2, 18) * 25]
@@ -125,10 +126,14 @@ while running:
                 way += 1
                 if way > 2:
                     way = 1
-            if event.key == pygame.K_z:
+            if event.key == pygame.K_c:
                 alg += 1
-                if alg > 3:
+                if alg > 4:
                     alg = 1
+            if event.key == pygame.K_z:
+                alg -= 1
+                if alg < 1:
+                    alg = 4
     ###################
     if state == 0:
         # all_sprites.update()
@@ -143,6 +148,8 @@ while running:
             text2 = font.render("BFS", False, (0, 0, 0))
         elif alg == 3:
             text2 = font.render("UCS", False, (0, 0, 0))
+        elif alg == 4:
+            text2 = font.render("A*", False, (0, 0, 0))
         text3 = font.render("PATH", False, (0, 0, 0))
         if way == 2:
             text3 = font.render("VSTD", False, (0, 0, 0))
@@ -155,6 +162,10 @@ while running:
             if e.route:
                 for r_dot in e.route:
                     screen.blit(e.dot_img, [r_dot[0] * 25 - 12.5, r_dot[1] * 25 - 12.5])
+
+        if player.route:
+            for r_dot in player.route:
+                screen.blit(player.dot_img, [r_dot[0] * 25 - 12.5, r_dot[1] * 25 - 12.5])
 
         PointsSprs.draw(screen)
         PlayerSprs.draw(screen)
